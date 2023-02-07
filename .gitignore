@@ -1,0 +1,5 @@
+node_modules
+gpt-backup.cjs
+tets.cjs
+package-lock.json
+.env
