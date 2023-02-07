@@ -14,8 +14,8 @@ const { processWebhook } = require('./modules/webhook.cjs');
 // run node express server
 const PORT = 3000;
 const options = {
-    cert: fs.readFileSync('G:\\OneDrive\\Config\\Certbot\\live\\tamam.tplinkdns.com\\fullchain.pem'),
-    key: fs.readFileSync('G:\\OneDrive\\Config\\Certbot\\live\\tamam.tplinkdns.com\\privkey.pem'),
+    cert: fs.readFileSync(process.env.SSL_CERT_FULLCHAIN_PEM_PATH),
+    key: fs.readFileSync(process.env.SSL_CERT_PRIVKEY_PEM_PATH)
 };
 const app = express();
 app.use(bodyParser.json());
