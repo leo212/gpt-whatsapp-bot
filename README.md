@@ -13,9 +13,15 @@ The bot is capable for storing all of the information from the conversation into
 
 ## configuration 
 Before running you'll need to provide an .env file with the following keys:
-API_KEY={OpenAI API Key}.
+API_KEY={OpenAI API Key}
+
 WHATSAPP_MESSAGES_ENDPOINT=https://graph.facebook.com/v15.0/{your app id number}/messages
+
 WHATSAPP_ACCESS_TOKEN={WhatsApp Access Token}
+
 MONGODB_URI=mongodb://{{yourmongodb-server:27017/{{dbname}}?serverSelectionTimeoutMS=5000&connectTimeoutMS=10000
+
 SSL_CERT_FULLCHAIN_PEM_PATH={fullchain.pem file location on the server}
+
 SSL_CERT_PRIVKEY_PEM_PATH={privkey.pem file location on the server}
+
