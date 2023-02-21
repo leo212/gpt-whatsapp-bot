@@ -72,10 +72,10 @@ async function embeddAndStore(userId, userPrompt, aiResonpse) {
     }
   }
 
-async function checkpoint(conversation) {
+async function checkpoint(userId, userPrompt, aiResonpse) {
     console.info("checkpoint");
     try {        
-        embeddAndStore(conversation.userId, `USER: ${conversation.userPrompt}`,`AI: ${conversation.aiPrompt}`);
+         embeddAndStore(userId, `USER: ${userPrompt}`,`AI: ${aiResonpse}`);
     } catch (err) {
         console.error(err.message);
     }
@@ -156,7 +156,7 @@ exports.getResponse = async function(userId, userInput) {
             console.debug(`bot responded: ${botResponse}`);
             console.debug(`total tokens: ${response.data.usage.total_tokens}`);
             
-            setTimeout(function() {checkpoint(conversation)}, 0);
+            setTimeout(function() {checkpoint(userId, fullPrompt, botResponse)}, 0);
 
             return decodeURIComponent(botResponse);
         }
