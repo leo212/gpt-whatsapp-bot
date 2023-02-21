@@ -75,7 +75,7 @@ async function embeddAndStore(userId, userPrompt, aiResonpse) {
 async function checkpoint(conversation) {
     console.info("checkpoint");
     try {        
-        embeddAndStore(conversation.userId, `USER: ${conversation.lastUserPrompt}`,`AI: ${conversation.lastAIPrompt}`);
+        embeddAndStore(conversation.userId, `USER: ${conversation.userPrompt}`,`AI: ${conversation.aiPrompt}`);
     } catch (err) {
         console.error(err.message);
     }
