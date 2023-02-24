@@ -33,10 +33,11 @@ AI: {{lastAIPrompt}}
 rewrite the conversation as a short paragraph.`
 };
 
-async function embeddAndStore(userId, userPrompt, aiResonpse) {  
+async function embeddAndStore(userId, userPrompt, aiResponse) {  
     userPrompt = decodeURIComponent(userPrompt.replaceAll("\n"," ").trim());
-    aiResonpse = decodeURIComponent(aiResonpse.replaceAll("\n"," ").trim());
+    aiResponse = decodeURIComponent(aiResponse.replaceAll("\n"," ").trim());
 
+    /*
     // convert the conversation into a short paragraph for embedding
     let prompt = Handlebars.compile(promptTemplates.SUMMARY_PROMPT)({
         lastUserPrompt: userPrompt,
@@ -54,28 +55,29 @@ async function embeddAndStore(userId, userPrompt, aiResonpse) {
 
     if (response.data.choices) { 
         let summary = response.data.choices[0].text;
-        console.log(`embedding: ${summary}`);
+        console.log(`embedding: ${summary}`);*/
+        // embedd only user prompt (the response will be included in the database and will be used when embedding found)
         let embedding = await openai.createEmbedding({
             model: "text-embedding-ada-002",
-            input: summary
+            input: userPrompt
         });
     
-        // find older similair embedding 
+        // find older similair embedding and delete them
         let relatedEmbeddings = await db.searchEmbeddings(embedding.data.data[0].embedding, userId, 10, 0.99);
         relatedEmbeddings.forEach(relatedEmbedding => {
-            console.log(`${relatedEmbedding.summary} ${relatedEmbedding.similarity}`);    
+            console.log(`USER: ${relatedEmbedding.userPrompt} AI: ${relatedEmbedding.aiResponse} ${relatedEmbedding.similarity}`);    
             db.deleteEmbedding(relatedEmbedding._id);    
         });
 
         // store the embedding        
-        db.storeEmbedding(userId, new Date().toISOString(), `${userPrompt}\n${aiResonpse}`, embedding.data.data[0].embedding);      
-    }
+        db.storeEmbedding(userId, new Date().toISOString(), userPrompt, aiResponse, embedding.data.data[0].embedding);      
+    //}
   }
 
-async function checkpoint(userId, userPrompt, aiResonpse) {
+async function checkpoint(userId, userPrompt, aiResponse) {
     console.info("checkpoint");
     try {        
-         embeddAndStore(userId, `USER: ${userPrompt}`,`AI: ${aiResonpse}`);
+         embeddAndStore(userId, userPrompt,aiResponse);
     } catch (err) {
         console.error(err.message);
     }
@@ -123,8 +125,8 @@ exports.getResponse = async function(userId, userInput) {
 
         conversation.relatedConversation = "";
         relatedConversations.forEach(relatedLine => {
-            conversation.relatedConversation+=`${relatedLine.timestamp.substring(0,19)} ${relatedLine.summary}\n`;    
-            console.debug(`${relatedLine.timestamp} ${relatedLine.summary} - ${relatedLine.similarity}\n`);        
+            conversation.relatedConversation+=`${relatedLine.timestamp.substring(0,19)} USER: ${relatedLine.userPrompt}\n AI: ${relatedLine.aiResponse}\n`;    
+            console.debug(`${relatedLine.timestamp} USER: ${relatedLine.userPrompt} AI: ${relatedLine.aiResponse} - ${relatedLine.similarity}\n`);        
         })  
 
         // get a response from the bot based on the full prompt and the related information
@@ -156,7 +158,7 @@ exports.getResponse = async function(userId, userInput) {
             console.debug(`bot responded: ${botResponse}`);
             console.debug(`total tokens: ${response.data.usage.total_tokens}`);
             
-            setTimeout(function() {checkpoint(userId, fullPrompt, botResponse)}, 0);
+            setTimeout(function() {checkpoint(userId, fullPrompt!=''?fullPrompt:userInput, botResponse)}, 0);
 
             return decodeURIComponent(botResponse);
         }
@@ -164,5 +166,3 @@ exports.getResponse = async function(userId, userInput) {
         return `An error occured: "${err.message}". Please try again.`;
     }
 }
-
-

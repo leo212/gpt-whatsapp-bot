@@ -9,15 +9,16 @@ mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true });
 const embeddingSchema = new mongoose.Schema({
     userId: String,
     timestamp: String,
-    summary: String,
+    userPrompt: String,
+    aiResponse: String,
     embedding: [Number]
   });
   
 // Create the model for the embeddings collection
 const Embedding = mongoose.model('Embedding', embeddingSchema);
 
-exports.storeEmbedding = async function(userId, timestamp, summary, embedding) {
-    const embeddingDoc = new Embedding({ userId, timestamp, summary, embedding });
+exports.storeEmbedding = async function(userId, timestamp, userPrompt, aiResponse, embedding) {
+    const embeddingDoc = new Embedding({ userId, timestamp, userPrompt, aiResponse, embedding });
     await embeddingDoc.save();
 }
 
@@ -36,9 +37,8 @@ exports.getLastConversation = async function(userId) {
   let lastMessage = await Embedding.find({userId: userId}).sort({timestamp:-1}).limit(1);
 
   if (lastMessage.length>0) {
-    let text = lastMessage[0].summary;
-    // get the USER text from the message and the AI text from the message
-    const [userPrompt, aiPrompt] = text.split('\n').map(line => line.substring(line.indexOf(':') + 2));
+    let userPrompt = lastMessage[0].userPrompt;
+    let aiPrompt = lastMessage[0].aiResponse;
 
     return {
       userPrompt: userPrompt,
