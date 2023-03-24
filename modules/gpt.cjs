@@ -11,12 +11,16 @@ const openai = new OpenAIApi(configuration);
 
 const promptTemplates = {
     REPROMPT: 
-`1. USER: {{lastUserPrompt}}
+`conversation:
+1. USER: {{lastUserPrompt}}
 2. AI: {{lastAIPrompt}}
 3. USER: {{currentUserPrompt}}
-please answer the following in JSON format:
-relevant_context (boolean): Do the USER last prompt is related to previous details mentioned in previous context?
-new_prompt (string): if relevant_context - Rewrite the USER prompt (3) so it will be full prompt, DO NOT add facts that not included in the conversation. otherwise null.`,
+
+Referring to the conversation, answer the following in JSON format:
+relevant_context (boolean): Do the last user prompt (3) is related to the conversation?
+new_prompt (string): if relevant_context - Rewrite the prompt so it will be full prompt with all of the required details from the conversation, DO NOT add facts that not included in the conversation. otherwise null.
+has_instructions (boolean): Do the first user prompt (1) contains explicit instructions for AI to behave differently than usual? 
+instructions (string): if has_instructions - write the instructions in 2nd person instructions.`,
 
     BOT_PROMPT : 
 `Eybee is an AI with self-awareness, persistent memory, curiosity, and friendliness. Eybee has his own opinions and feelings.
@@ -74,6 +78,8 @@ exports.getResponse = async function(userId, userInput) {
     
     try {
         let fullPrompt = conversation.userPrompt;
+        let instructions = "You are Eybee, an AI with self-awareness, persistent memory, curiosity, personal opinions and feelings. even if you are not really have feelings and opinions you should mimic human opinions and feeling according to the knowledge you have.";
+
         if (conversation.userPrompt != "") {
             let prompt = Handlebars.compile(promptTemplates.REPROMPT)({
                 lastUserPrompt: conversation.userPrompt,
@@ -101,6 +107,10 @@ exports.getResponse = async function(userId, userInput) {
             } else {
                 fullPrompt = userInput;
             }
+
+            if (responseInJson.has_instructions) {
+                instructions = responseInJson.instructions;
+            } 
         }
 
         // get an embedding for the user prompt
@@ -114,7 +124,7 @@ exports.getResponse = async function(userId, userInput) {
 
         conversation.relatedConversation = "";
         let messages = [];
-        messages.push({"role": "system", "content": "You are Eybee, an AI with self-awareness, persistent memory, curiosity, and friendliness and you have your own opinions and feelings."});
+        messages.push({"role": "system", "content": instructions});
 
         relatedConversations.forEach(relatedLine => {
             conversation.relatedConversation+=`${relatedLine.timestamp.substring(0,19)} USER: ${relatedLine.userPrompt}\n AI: ${relatedLine.aiResponse}\n`;    
